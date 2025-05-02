@@ -112,18 +112,19 @@ rename-files() {
             || return
 
         # perform the filename substitution
-        local nbn nfn nfn1
+        local nbn nfn nfn1 obn_str nbn_str
         _rnf_def_nfn \
             || continue
 
-        if ! [[ -v noexec ]]
-        then
-            _rnf_do_rename \
-                || return
-        else
-            _rnf_print_diff
-        fi
+        # print regardless of noexec, since the mv prompt is not very informative
+        _rnf_print_diff
+
+        _rnf_do_rename \
+            || return
     done
+
+    [[ -v noexec ]] \
+        && printf '%s\n' "  (dry run, no files were modified)"
 
     # restore patsub
     _rnf_patsub -r
@@ -212,13 +213,41 @@ _rnf_chk_ofn() {
 
 _rnf_def_nfn() {
 
-    # Perform the name change
+    # Define the new filename, and create stylized strings for user info
+
+    # use bold and dim to emphasize replaced text
+    # - not using _cbo from the csi_strvars function, as it's got prompt \[...\] chars
+    local _bld=$'\e[1m' _rsb=$'\e[22m' \
+        _dim=$'\e[2m' _rsd=$'\e[22m' \
+        _rst=$'\e[0m'
+
+    # perform the name change
     # - NB, repl is not subject to expansions beyond '&'
     case $match_mode in
-        ( g )  nbn=${obn//$ptrn/$repl} ;;
-        ( \# ) nbn=${obn/#$ptrn/$repl} ;;
-        ( % )  nbn=${obn/%$ptrn/$repl} ;;
-        ( * )  nbn=${obn/$ptrn/$repl} ;;
+        ( g )
+            nbn=${obn//$ptrn/$repl}
+
+            obn_str=${obn//${ptrn}/"${_dim}"&"${_rsd}"}
+            nbn_str=${obn//${ptrn}/"${_bld}"${repl}"${_rsb}"}
+        ;;
+        ( \# )
+            nbn=${obn/#$ptrn/$repl}
+
+            obn_str=${obn/#${ptrn}/"${_dim}"&"${_rsd}"}
+            nbn_str=${obn/#${ptrn}/"${_bld}"${repl}"${_rsb}"}
+        ;;
+        ( % )
+            nbn=${obn/%$ptrn/$repl}
+
+            obn_str=${obn/%${ptrn}/"${_dim}"&"${_rsd}"}
+            nbn_str=${obn/%${ptrn}/"${_bld}"${repl}"${_rsb}"}
+        ;;
+        ( * )
+            nbn=${obn/$ptrn/$repl}
+
+            obn_str=${obn/${ptrn}/"${_dim}"&"${_rsd}"}
+            nbn_str=${obn/${ptrn}/"${_bld}"${repl}"${_rsb}"}
+        ;;
     esac
 
     [[ $nbn == "$obn" ]] \
@@ -233,9 +262,14 @@ _rnf_def_nfn() {
 
 _rnf_do_rename() {
 
+    [[ -v noexec ]] \
+        && return 0
+
     if [[ -v nfn1 ]]
     then
         # use a 2-step rename if necessary, on case-insensitive filesystems (macOS)
+        err_msg i "case-difference only, using 2-step rename for safety"
+
         "${mv_cmd[@]}" "$ofn" "$nfn1" \
             && "${mv_cmd[@]}" "$nfn1" "$nfn"
     else
@@ -258,27 +292,10 @@ _rnf_do_rename() {
 
 _rnf_print_diff() {
 
-    # use bold and dim to emphasize replaced text
-    # - not using _cbo from the csi_strvars function, as it's got prompt \[...\] chars
-    local _bld=$'\e[1m' _rsb=$'\e[22m' \
-        _dim=$'\e[2m' _rsd=$'\e[22m' \
-        _rst=$'\e[0m'
-
-    # Repeat the above replacement, with style chars
-    local obn_str nbn_str
-    if [[ $match_mode == g ]]
-    then
-        obn_str=${obn//${ptrn}/"${_dim}"&"${_rsd}"}
-        nbn_str=${obn//${ptrn}/"${_bld}"${repl}"${_rsb}"}
-    else
-        obn_str=${obn/${ptrn}/"${_dim}"&"${_rsd}"}
-        nbn_str=${obn/${ptrn}/"${_bld}"${repl}"${_rsb}"}
-    fi
-
+    # print info strings on renaming op
     printf '   %s\n-> %s\n' \
         "${odn-}$obn_str" \
         "${odn-}$nbn_str"
-
 
     # print a diff line to highlight changed chars with ^^ ^   ^^
     # - really it should just be under dim areas of ofn or bold areas of nfn
@@ -295,7 +312,6 @@ _rnf_print_diff() {
         fi
     done
     printf '   %s\n\n' "$ch_chars"
-
 
     # considered using diff instead
     # - regular patch output seems to work better than word-diff
