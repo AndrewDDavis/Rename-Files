@@ -7,9 +7,9 @@ shell script.
 
     `rename-files [opts] {ptrn} {repl} {file-name ...}`
 
-In the indicated file-names, a match to `ptrn` is replaced with the `repl`
-string. The default command used to rename the files is '/bin/mv -vi'. The -v
-option causes mv to print a helpful string, and the -i option causes mv to
+The `ptrn` argument is compared to the indicated file-names, and a match is replaced
+with the `repl` string. The default command used to rename the files is '/bin/mv -vi'.
+The -v option causes mv to print a helpful string, and the -i option causes mv to
 request confirmation before overwriting a file.
 
 With the -i (interactive) flag in effect, a file is only overwritten if the user
