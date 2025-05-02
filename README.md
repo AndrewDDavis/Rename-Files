@@ -80,7 +80,7 @@ as by placing the following in your `~/.bashrc`:
 
     ```sh
     touch file_abc.ext
-    mv -vi file_{abc,def}.ext  # replace 'abc' with 'def'
-    mv -vi file_def{,ghi}.ext  # add 'ghi'
-    mv -vi file_{def,}.ext     # remove 'def'
+    mv file_{abc,def}.ext  # replace 'abc' with 'def'
+    mv file_def{,ghi}.ext  # add 'ghi'
+    mv file_d{efg,}hi.ext  # remove 'efg'
     ```
