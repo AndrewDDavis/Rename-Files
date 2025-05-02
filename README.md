@@ -7,15 +7,15 @@ shell script.
 
     `rename-files [opts] {ptrn} {repl} {file-name ...}`
 
-The `ptrn` argument is compared to the indicated file-names, and a match is replaced
-with the `repl` string. The default command used to rename the files is '/bin/mv -vi'.
+The `ptrn` argument is compared to each indicated file-name, and a match is replaced
+with the `repl` string. The default command used to rename the files is `/bin/mv -vi`.
 The -v option causes mv to print a helpful string, and the -i option causes mv to
 request confirmation before overwriting a file.
 
 With the -i (interactive) flag in effect, a file is only overwritten if the user
 provides a string starting with y or Y at the confirmation prompt. The file will
 be skipped if the reply is any other string, such as 'n' or an empty string. If
-the user hits ^C at the prompt, the program will abort.
+the user hits `^C` at the prompt, the program will abort.
 
 ## Options
 
@@ -73,7 +73,7 @@ as by placing the following in your `~/.bashrc`:
 ## Alternatives
 
   - For more robust treatment of regular expressions, use the perl function
-    'rename' from the repos.
+    `rename` from the repos.
 
   - For simple string replacement on a single file, including addition and
     removal, use the shell's brace expansion instead. E.g.:
