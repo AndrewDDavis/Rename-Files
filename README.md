@@ -1,12 +1,13 @@
 # Rename-files
 
-Rename files using substring or pattern replacement.
+Rename files using substring or pattern replacement. Simple and robust, written in pure
+shell script.
 
 ## Usage
 
     `rename-files [opts] {ptrn} {repl} {file-name ...}`
 
-In the indicated file-names, a match to 'ptrn' is replaced with the 'repl'
+In the indicated file-names, a match to `ptrn` is replaced with the `repl`
 string. The default command used to rename the files is '/bin/mv -vi'. The -v
 option causes mv to print a helpful string, and the -i option causes mv to
 request confirmation before overwriting a file.
@@ -16,11 +17,6 @@ provides a string starting with y or Y at the confirmation prompt. The file will
 be skipped if the reply is any other string, such as 'n' or an empty string. If
 the user hits ^C at the prompt, the program will abort.
 
-It is recommended to set a shorter alias for rename-files in your environment, such
-as by placing the following in your `~/.bashrc`:
-
-    `alias rnf='rename-files'`
-
 ## Options
 
 ```
@@ -29,7 +25,7 @@ as by placing the following in your `~/.bashrc`:
   -i : prompt for overwriting files (default)
   -n : do not overwrite existing files
 
-  -g : replace all 'ptrn' matches in a filename, not only the first
+  -g : replace all `ptrn` matches in a filename, not only the first
   -# : match only at the start of the filename
   -% : match only at the end of the filename
 
@@ -41,26 +37,40 @@ The -i, -f, and -n options mutually exclusive, and only the final one provided
 on the command line takes effect. The same is true for the -g, -#, and -%
 options. For details on the backup file naming scheme refer to the mv manpage.
 
-Pattern matching details
+## Pattern matching details
 
-  - The 'ptrn' argument is interpreted similarly to a glob pattern by the
+  - The `ptrn` argument is interpreted similarly to a glob pattern by the
     shell. Refer to 'Pattern Matching' in the Bash manpage for syntax details.
-  - The longest possible match to 'ptrn' is replaced.
+  - The longest possible match to `ptrn` is replaced.
   - The 'patsub_replacement' shell option is enabled. Any non-esacped instances
-    of '&' in 'repl' are replaced with the matching portion of 'ptrn'. To print
-    a literal '&', use '\&'. The 'repl' string is not subject to other shell
+    of '&' in `repl` are replaced with the matching portion of `ptrn`. To print
+    a literal `&`, use `\&`. The `repl` string is not subject to other shell
     expansions after it has been passed as an argument.
 
-Notes
+## Notes
 
   - Operates only on file basenames. Moving files among directories is not
     supported.
-  - Filenames that don't match 'ptrn' are ignored.
-  - Use an empty 'repl' argument to remove 'ptrn'.
+  - Filenames that don't match `ptrn` are ignored.
+  - Use an empty `repl` argument to remove `ptrn`.
   - If only the case of the file-name changes in the renaming operation, a
     two-step renaming process is used for safety on case-insenstive filesystems.
 
-Alternatives
+## Installation
+
+ 1. Clone or download the repo. E.g., into a subdirectory of `/usr/local/opt`.
+
+ 2. Symlink the `rename-files.sh` file from a directory on your PATH, e.g.:
+
+    `ln -s /usr/local/opt/rename-files/rename-files.sh \
+        ~/.local/bin/rename-files`
+
+ 3. Consider setting a shorter alias for `rename-files` in your environment, such
+as by placing the following in your `~/.bashrc`:
+
+    `alias rnf='rename-files'`
+
+## Alternatives
 
   - For more robust treatment of regular expressions, use the perl function
     'rename' from the repos.
