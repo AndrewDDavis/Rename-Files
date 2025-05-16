@@ -58,7 +58,11 @@ options. For details on the backup file naming scheme refer to the mv manpage.
 
 ## Installation
 
- 1. Clone or download the repo. E.g., into a subdirectory of `/usr/local/opt`.
+ 0. Rename-files is part of the larger [Shell Script Library](https://github.com/AndrewDDavis/Shell-Script-Library) project, and relies on some of the functions from that library. In particular, `rename-files` relies on `import_func`, which it uses to source files with supporting functions, and `docsh` and `err_msg` to print useful messages and documentation.
+
+    Installation of the library is very simple, and can include installation of `rename-files` as a submodule. Refer to the [Github page](https://github.com/AndrewDDavis/Shell-Script-Library) for details.
+
+ 1. If `rename-files` was not installed as a submodule above, clone or download the repo. E.g., into a subdirectory of `/usr/local/opt`.
 
  2. Symlink the `rename-files.sh` file from a directory on your PATH, e.g.:
 
@@ -70,10 +74,11 @@ as by placing the following in your `~/.bashrc`:
 
     `alias rnf='rename-files'`
 
+
 ## Alternatives
 
   - For more robust treatment of regular expressions, use the perl function
-    `rename` from the repos.
+    `rename` from the repos. However, this requires `sed`-like syntax.
 
   - For simple string replacement on a single file, including addition and
     removal, use the shell's brace expansion instead. E.g.:
