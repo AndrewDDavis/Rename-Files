@@ -8,7 +8,7 @@
 # - write examples like those in the manpages for rename and rename.ul
 
 # dependencies
-_deps=( docsh err_msg )
+_deps=( docsh err_msg vrb_msg )
 
 # handy alias
 # - This only takes effect if the file is sourced, otherwise add the alias to
@@ -87,28 +87,32 @@ rename-files() {
     [[ $# -eq 0  || $1 == @(-h|--help) ]] \
         && { docsh -TD; return; }
 
+    # cleanup routine
+    local _subfuncs=()
+    trap '
+        unset -f "${_subfuncs[@]}"
+        trap - return
+    ' RETURN
+
+    local _verb=1
     local mv_cmd=( /bin/mv )
 
     # import supporting funcs
     import_func -l _rnf_do_rename \
         || return
 
-    # options
-    local _b _v noexec \
-        ow_mode match_mode
-
-    # posnl args
+    # parse options and posnl args
+    local noexec \
+        match_mode=s  # s, g, #, or %
     local ptrn repl ofns
-
-    _rnf_parse_args "$@" \
-        || return
+    _rnf_parse_args "$@" || return
     shift $#
 
     # check patsub shell option
     local _patsub_off
     _rnf_patsub -c
 
-    # loop over filenames
+    # loop over (original) filenames
     local ofn
     for ofn in "${ofns[@]}"
     do
@@ -118,7 +122,7 @@ rename-files() {
             || return
 
         # define new filename
-        local nbn nfn nfn1 obn_str nbn_str
+        local nfn nfn1 obn_str nbn_str
         _rnf_def_nfn \
             || continue
 
@@ -131,12 +135,10 @@ rename-files() {
     done
 
     [[ -v noexec ]] \
-        && printf '%s\n' "  (dry run, no files were modified)"
+        && printf >&2 '%s\n' "  (dry run, no files were modified)"
 
     # restore patsub
     _rnf_patsub -r
-
-    return 0
 }
 
 

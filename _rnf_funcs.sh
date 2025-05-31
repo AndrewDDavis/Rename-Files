@@ -1,20 +1,21 @@
+_subfuncs+=( _rnf_parse_args )
 _rnf_parse_args() {
 
     # Defaults
-    _v=1          # verbosity
-    ow_mode=i     # f, i, or n
-    match_mode=s  # s, g, #, or %
+    local _b      # backups
+    local _v=1    # verbosity of the mv command
+    local _ow=i   # f, i, or n
 
     # Parse CLI args
     local flag OPTARG OPTIND=1
     while getopts ':bfing#%pq-:' flag
     do
         # handle long options
-        split_longopt flag
+        longopts flag
 
         case $flag in
             ( b ) _b=1; mv_cmd+=( -b ) ;;
-            ( f | i | n ) ow_mode=$flag ;;
+            ( f | i | n ) _ow=$flag ;;
             ( g | \# | % ) match_mode=$flag ;;
             ( p ) noexec=1 ;;
             ( q ) (( _v-- )) ;;
@@ -25,13 +26,13 @@ _rnf_parse_args() {
     done
     shift $(( OPTIND-1 ))
 
-    [[ -v _b  && $ow_mode == n ]] \
+    [[ -v _b  && $_ow == n ]] \
         && { err_msg 4 "-b and -n may not be used together"; return; }
 
     (( _v > 0 )) \
         && mv_cmd+=( -v )
 
-    mv_cmd+=( -"$ow_mode" )
+    mv_cmd+=( -"$_ow" )
 
     ptrn=${1:?"pattern required"}
     repl=${2:?"repl required"}
@@ -43,31 +44,32 @@ _rnf_parse_args() {
     ofns=( "$@" )
 }
 
+_subfuncs+=( _rnf_patsub )
 _rnf_patsub() {
 
-    if [[ $1 == -c ]]
-    then
-        # check for patsub option
-        if ! shopt -q patsub_replacement
-        then
-            _patsub_off=1
-            shopt -s patsub_replacement
-        fi
-
-    elif [[ $1 == -r ]]
-    then
-        # restore patsub
-        if [[ -v _patsub_off ]]
-        then
-            shopt -u patsub_replacement
-        fi
-    fi
+    case $1 in
+        ( -c )
+            # check for patsub option
+            if ! shopt -q patsub_replacement
+            then
+                _patsub_off=1
+                shopt -s patsub_replacement
+            fi
+        ;;
+        ( -r )
+            # restore patsub
+            if [[ -v _patsub_off ]]
+            then
+                shopt -u patsub_replacement
+            fi
+        ;;
+    esac
 }
 
+_subfuncs+=( _rnf_chk_ofn )
 _rnf_chk_ofn() {
 
     # check ofn, define obn, odn
-
     [[ -e $ofn ]] \
         || { err_msg 3 "file not found: '$ofn'; aborting..."; return; }
 
@@ -80,6 +82,7 @@ _rnf_chk_ofn() {
     return 0
 }
 
+_subfuncs+=( _rnf_def_nfn )
 _rnf_def_nfn() {
 
     # Define the new filename, and create stylized strings for user info
@@ -92,6 +95,7 @@ _rnf_def_nfn() {
 
     # perform the name change
     # - NB, repl is not subject to expansions beyond '&'
+    local nbn
     case $match_mode in
         ( g )
             nbn=${obn//$ptrn/$repl}
@@ -129,6 +133,7 @@ _rnf_def_nfn() {
     nfn="${odn-}${nbn}"
 }
 
+_subfuncs+=( _rnf_do_rename )
 _rnf_do_rename() {
 
     [[ -v noexec ]] \
@@ -137,7 +142,7 @@ _rnf_do_rename() {
     if [[ -v nfn1 ]]
     then
         # use a 2-step rename if necessary, on case-insensitive filesystems (macOS)
-        err_msg i "case-difference only, using 2-step rename for safety"
+        vrb_msg 1 "case-difference only, using 2-step rename for safety"
 
         "${mv_cmd[@]}" "$ofn" "$nfn1" \
             && "${mv_cmd[@]}" "$nfn1" "$nfn"
@@ -159,10 +164,11 @@ _rnf_do_rename() {
         }
 }
 
+_subfuncs+=( _rnf_print_diff )
 _rnf_print_diff() {
 
     # print info strings on renaming op
-    printf '   %s\n-> %s\n' \
+    printf >&2 '   %s\n-> %s\n' \
         "${odn-}$obn_str" \
         "${odn-}$nbn_str"
 
@@ -180,7 +186,7 @@ _rnf_print_diff() {
             ch_chars+='^'
         fi
     done
-    printf '   %s\n\n' "$ch_chars"
+    printf >&2 '   %s\n\n' "$ch_chars"
 
     # considered using diff instead
     # - regular patch output seems to work better than word-diff
