@@ -17,7 +17,7 @@ alias rnf='rename-files'
 
 rename-files() {
 
-    : "Rename files using substring or pattern replacement
+    : """Rename files using substring or pattern replacement
 
         Usage
 
@@ -82,7 +82,7 @@ rename-files() {
               mv -vi file_{abc,def}.ext  # replace 'abc' with 'def'
               mv -vi file_def{,ghi}.ext  # add 'ghi'
               mv -vi file_{def,}.ext     # remove 'def'
-    "
+    """
 
     [[ $# -eq 0  || $1 == @(-h|--help) ]] \
         && { docsh -TD; return; }
