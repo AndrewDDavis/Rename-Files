@@ -1,4 +1,3 @@
-_subfuncs+=( _rnf_parse_args )
 _rnf_parse_args() {
 
     # Defaults
@@ -44,7 +43,6 @@ _rnf_parse_args() {
     ofns=( "$@" )
 }
 
-_subfuncs+=( _rnf_patsub )
 _rnf_patsub() {
 
     case $1 in
@@ -66,7 +64,6 @@ _rnf_patsub() {
     esac
 }
 
-_subfuncs+=( _rnf_chk_ofn )
 _rnf_chk_ofn() {
 
     # check ofn, define obn, odn
@@ -82,7 +79,6 @@ _rnf_chk_ofn() {
     return 0
 }
 
-_subfuncs+=( _rnf_def_nfn )
 _rnf_def_nfn() {
 
     # Define the new filename, and create stylized strings for user info
@@ -133,7 +129,6 @@ _rnf_def_nfn() {
     nfn="${odn-}${nbn}"
 }
 
-_subfuncs+=( _rnf_do_rename )
 _rnf_do_rename() {
 
     [[ -v noexec ]] \
@@ -164,7 +159,6 @@ _rnf_do_rename() {
         }
 }
 
-_subfuncs+=( _rnf_print_diff )
 _rnf_print_diff() {
 
     # print info strings on renaming op
