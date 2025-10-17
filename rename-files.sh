@@ -87,27 +87,28 @@ rename-files() {
     local _verb=1
     local mv_cmd=( /bin/mv )
 
-    # import supporting funcs
-    import_func -l _rnf_do_rename \
-        || return
+    # cleanup supporting functions if sourced
+    trap 'return' ERR
 
-    # define cleanup routine after the supporting functions are sourced
     trap '
         unset -f _rnf_parse_args _rnf_patsub _rnf_chk_ofn \
             _rnf_def_nfn _rnf_do_rename _rnf_print_diff
-        trap - return
+        trap - err return
     ' RETURN
+
+    # import supporting funcs
+    import_func -l _rnf_do_rename
 
     # parse options and posnl args
     local noexec
     local match_mode=s  # s, g, #, or %
     local ptrn repl ofns
-    _rnf_parse_args "$@" || return
+    _rnf_parse_args "$@"
     shift $#
 
     # check patsub shell option
     local _patsub_off
-    _rnf_patsub -c
+    _rnf_patsub check
 
     # loop over (original) filenames
     local ofn
@@ -115,8 +116,7 @@ rename-files() {
     do
         # check and split ofn
         local obn odn
-        _rnf_chk_ofn \
-            || return
+        _rnf_chk_ofn
 
         # define new filename
         local nfn nfn1 obn_str nbn_str
@@ -127,19 +127,18 @@ rename-files() {
         # - regardless of noexec, since the mv prompt is not very informative
         _rnf_print_diff
 
-        _rnf_do_rename \
-            || return
+        _rnf_do_rename
     done
 
     [[ -v noexec ]] \
         && printf >&2 '%s\n' "  (dry run, no files were modified)"
 
     # restore patsub
-    _rnf_patsub -r
+    _rnf_patsub restore
 }
 
 # dependencies
-_deps=( docsh err_msg vrb_msg )
+_deps=( docsh err_msg vrb_msg longopts )
 
 if [[ $0 == "${BASH_SOURCE[0]}" ]]
 then

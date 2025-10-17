@@ -7,7 +7,7 @@ _rnf_parse_args() {
 
     # Parse CLI args
     local flag OPTARG OPTIND=1
-    while getopts ':bfing#%pq-:' flag
+    while getopts ':bfing#%pqv-:' flag
     do
         # handle long options
         longopts flag
@@ -18,6 +18,7 @@ _rnf_parse_args() {
             ( g | \# | % ) match_mode=$flag ;;
             ( p ) noexec=1 ;;
             ( q ) (( _v-- )) ;;
+            ( v ) (( _verb++ )) ;;
 
             ( \? ) err_msg 2 "unknown option: '-$OPTARG'"; return ;;
             ( : )  err_msg 3 "missing argument for -$OPTARG"; return ;;
@@ -34,27 +35,28 @@ _rnf_parse_args() {
     mv_cmd+=( -"$_ow" )
 
     ptrn=${1:?"pattern required"}
-    repl=${2:?"repl required"}
+    repl=${2?"repl required"}
     shift 2
 
-    [[ $# -eq 0 ]] \
+    (( $# == 0 )) \
         && return 1
 
+    # remaining args are file names
     ofns=( "$@" )
 }
 
 _rnf_patsub() {
 
     case $1 in
-        ( -c )
-            # check for patsub option
+        ( check )
+            # check for patsub shell option
             if ! shopt -q patsub_replacement
             then
                 _patsub_off=1
                 shopt -s patsub_replacement
             fi
         ;;
-        ( -r )
+        ( restore )
             # restore patsub
             if [[ -v _patsub_off ]]
             then
@@ -66,17 +68,22 @@ _rnf_patsub() {
 
 _rnf_chk_ofn() {
 
-    # check ofn, define obn, odn
-    [[ -e $ofn ]] \
-        || { err_msg 3 "file not found: '$ofn'; aborting..."; return; }
+    # check ofn, define obn and odn
+    vrb_msg 2 "checking '$ofn'"
+
+    if [[ ! -e $ofn ]]
+    then
+        err_msg 3 "file not found: '$ofn'; aborting..."
+        return
+    fi
 
     obn=$( basename "$ofn" )
 
     # Stay with implied CWD if no '/' in ofn
-    [[ $ofn == */* ]] \
-        && odn=$( dirname "$ofn" )'/'
-
-    return 0
+    if [[ $ofn == */* ]]
+    then
+        odn=$( dirname "$ofn" )'/'
+    fi
 }
 
 _rnf_def_nfn() {
@@ -119,8 +126,11 @@ _rnf_def_nfn() {
         ;;
     esac
 
-    [[ $nbn == "$obn" ]] \
-        && return 1
+    [[ $nbn == "$obn" ]] && {
+        vrb_msg 2 "no change after replacement in mode '$match_mode':" \
+            "obn: '$obn', ptrn: '$ptrn', repl: '$repl'"
+        return 1
+    }
 
     # check whether old and new differ only in case
     [[ ${nbn@L} == "${obn@L}" ]] \
@@ -162,25 +172,26 @@ _rnf_do_rename() {
 _rnf_print_diff() {
 
     # print info strings on renaming op
-    printf >&2 '   %s\n-> %s\n' \
+    printf >&2 '   %s\n-> %s\n\n' \
         "${odn-}$obn_str" \
         "${odn-}$nbn_str"
 
     # print a diff line to highlight changed chars with ^^ ^   ^^
     # - really it should just be under dim areas of ofn or bold areas of nfn
-    local a b ch_chars=''
-    for (( i=0; i<${#ofn}; i++ ))
-    do
-        a=${ofn:i:1}
-        b=${nfn:i:1}
-        if [[ $a == "$b" ]]
-        then
-            ch_chars+=' '
-        else
-            ch_chars+='^'
-        fi
-    done
-    printf >&2 '   %s\n\n' "$ch_chars"
+    # - this didn't really add clarity, removed for now
+    # local a b ch_chars=''
+    # for (( i=0; i<${#ofn}; i++ ))
+    # do
+    #     a=${ofn:i:1}
+    #     b=${nfn:i:1}
+    #     if [[ $a == "$b" ]]
+    #     then
+    #         ch_chars+=' '
+    #     else
+    #         ch_chars+='^'
+    #     fi
+    # done
+    # printf >&2 '   %s\n\n' "$ch_chars"
 
     # considered using diff instead
     # - regular patch output seems to work better than word-diff
